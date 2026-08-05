@@ -15,5 +15,5 @@ export default defineConfig({
     build: {
         minify: false,
     },
-    base: "https://njonathanj.com/arm64-editor/"
+    base: "https://njonathanj.com/AArch64-Simulator/"
 })
