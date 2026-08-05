@@ -3,6 +3,9 @@
 skip_core_tasks = true
 skip_git_env_info = true
 
+[tasks.default]
+alias = "all"
+
 [tasks.build]
 command = "cargo"
 args = ["build", "--no-default-features", "--target", "wasm32-unknown-unknown", "--profile", "wasm"]
