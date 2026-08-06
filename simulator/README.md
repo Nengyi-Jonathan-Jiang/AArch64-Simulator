@@ -4,7 +4,8 @@ Required:
 
 - Rust and `cargo` (`nightly` build, `wasm32-unknown-unknown` target)
 - [`wabt`](https://github.com/webassembly/wabt) and [`binaryen`](https://github.com/WebAssembly/binaryen) (for
-  WebAssembly-specific optimization passes)
+  WebAssembly-specific optimization passes). Specifically, `wasm-opt` from 
+ `wabt` and `wasm-strip` from `binaryen` should be in PATH
 - Either `bash` or `python` (used by build scripts)
 
 Optional:
@@ -13,7 +14,7 @@ Optional:
   reasons described below
 - [`llvm-dwarfdump`](https://github.com/llvm) enables generation of more
   detailed TypeScript type information. This is also highly recommended for the same reason.
-- [`cargo-make`](https://github.com/sagiegurari/cargo-make) to run the full
+- The [`cargo-make`](https://github.com/sagiegurari/cargo-make) crate to run the full
   build with one command
 
 # Building
@@ -26,9 +27,9 @@ and invalidate JS-side interop code.
 ## Using Cargo Make
 
 If Cargo Make is installed, run:
-`cargo make all`
+`cargo make`
 
-## Building Manually
+## Without Cargo Make
 
 If Cargo Make is not available, perform the build steps manually:
 
@@ -38,13 +39,17 @@ Build for the `wasm32-unknown-unknown` target using either the `dev` profile or
 the custom `wasm` profile:
 
 ```bash
-cargo build --target wasm32-unknown-unknown --profile wasm
+cargo build --no-default-features --target wasm32-unknown-unknown --profile wasm
 ```
 
 #### 2. Package and optimize the generated WebAssembly
 
 ```bash
 bash ./scripts/pkg.sh
+```
+or
+```bash
+python ./scripts/pkg.py
 ```
 
 This runs WebAssembly-specific optimization passes provided by WABT and copies
