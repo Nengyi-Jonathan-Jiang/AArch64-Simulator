@@ -5,7 +5,7 @@ Required:
 - Rust and `cargo` (`nightly` build, `wasm32-unknown-unknown` target)
 - [`wabt`](https://github.com/webassembly/wabt) and [`binaryen`](https://github.com/WebAssembly/binaryen) (for
   WebAssembly-specific optimization passes). Specifically, `wasm-opt` from 
- `wabt` and `wasm-strip` from `binaryen` should be in PATH
+ `binaryen` and `wasm-strip` from `wabt` should be in PATH
 - Either `bash` or `python` (used by build scripts)
 
 Optional:
@@ -53,7 +53,7 @@ python ./scripts/pkg.py
 ```
 
 This runs WebAssembly-specific optimization passes provided by WABT and copies
-the generated artifacts into the directory structure expected by webpack
+the generated artifacts into the directory structure expected by Vite
 
 #### 3. Regenerate TypeScript definitions (optional, recommended)
 
