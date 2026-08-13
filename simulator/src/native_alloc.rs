@@ -52,6 +52,8 @@ unsafe impl<T: ?Sized> IAllocation for NativeAllocation<T> {
 #[cfg(debug_assertions)]
 impl<T: ?Sized> Drop for NativeAllocation<T> {
     fn drop(&mut self) {
+        unsafe { self.ptr.drop_in_place() };
+
         // This wraps around. This may be ok
         if NUM_ACTIVE_ALLOCATIONS.fetch_sub(1, SeqCst) == 0 {
             panic!("Something really bad happened; num active allocations became negative");

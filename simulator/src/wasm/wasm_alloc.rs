@@ -49,6 +49,8 @@ unsafe impl<T: ?Sized> IAllocation for WASMAllocation<T> {
 #[cfg(debug_assertions)]
 impl<T: ?Sized> Drop for WASMAllocation<T> {
     fn drop(&mut self) {
+        unsafe { self.ptr.drop_in_place() };
+
         let mut guard = NUM_ACTIVE_ALLOCATIONS.lock();
         if *guard == 0 {
             panic!("Something really bad happened; num active allocations became negative");
