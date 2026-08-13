@@ -1,10 +1,14 @@
 use crate::alloc_interface::{IAlloc, IAllocation};
+use crate::components::lru_cache::FixedSizeLRUCache;
+use crate::components::sizes::Addr;
 use crate::components::MemoryAccess;
-use crate::components::sizes::{Addr, Byte};
-use crate::zero_init::{ZeroInit, zeroInit};
+use crate::zero_init::{zeroInit, ZeroInit};
 use crate::{Alloc, Allocation};
 use core::mem::transmute;
+use core::ops::{Div, Mul};
+use hybrid_array::{Array, ArraySize};
 use macro_rules_attribute::derive;
+use typenum::{Prod, Quot};
 
 // WASM pages are 64 KiB per page, with a maximum of 65536 pages (4GiB).
 const PAGE_SIZE_LOG: usize = 16;
@@ -79,12 +83,6 @@ pub struct DirectMemoryAccess {
     memory: GrowableMemory,
 }
 
-impl DirectMemoryAccess {
-    pub fn new() -> Allocation<dyn MemoryAccess> {
-        unsafe { Alloc::alloc::<Self>().init_zeroed().unsized_map(|x| x as _) }
-    }
-}
-
 impl MemoryAccess for DirectMemoryAccess {
     fn get(&mut self, addr: Addr) -> Result<&mut u8, ()> {
         let page = self.memory.get_page_for(addr);
@@ -94,4 +92,20 @@ impl MemoryAccess for DirectMemoryAccess {
                 .as_mut_unchecked()
         })
     }
+}
+
+struct CacheLine<N: ArraySize> {
+    tag: Addr,
+    bytes: Array<u8, N>,
+    dirty: bool,
+    write_back_ptr: *mut Array<u8, N>,
+}
+
+/// Parameters:
+/// - A: Associativity
+/// - B: Bytes per cache line
+/// - S: number of Sets == total Capacity / (Associativity * Bytes per cache line)
+pub struct CachedMemoryAccess<A: ArraySize, B: ArraySize, S: ArraySize> {
+    memory: GrowableMemory,
+    cache: Array<FixedSizeLRUCache<Option<CacheLine<B>>, A>, S>,
 }

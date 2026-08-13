@@ -262,6 +262,15 @@ pub unsafe trait IAllocation: core::ops::DerefMut + Sized {
     }
 }
 
+pub macro allocation_to_trait_object {
+    ($x:expr => $t:path) => {
+        {
+            let x = $x;
+            unsafe { IAllocation::unsized_map(x, |x| x as &mut dyn $t) }
+        }
+    }
+}
+
 /// A simple bump allocator, providing a method to reset the "next pointer" once all allocations are
 /// dropped
 pub unsafe trait IAlloc {

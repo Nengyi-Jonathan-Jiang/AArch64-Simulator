@@ -99,6 +99,8 @@ impl<T: Default, N: ArraySize> Default for FixedSizeLRUCache<T, N> {
     }
 }
 
+// TODO: extend MatrixLRUState to handle N > 8, preferably up to N = 32
+
 /// A data structure that tracks the least recently used element out of a fixed set of `N` elements
 /// encoded as integers from `0` to `N - 1`
 #[derive(zeroInit!)]

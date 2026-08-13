@@ -13,7 +13,7 @@ pub struct SimulatorParams {
 pub struct CacheParams {
     pub associativity: u8,
     pub block_size_log: u8,
-    pub num_sets_log: u8,
+    pub capacity_log: u8,
 
     pub policy: CachePolicy,
     pub write_mode: CacheWriteMode,
@@ -45,8 +45,9 @@ pub struct BranchPredictorParams {
 #[repr(u8)]
 #[derive(Copy, Clone)]
 pub enum CachePolicy {
-    LRU = 0,
-    NMRU = 1,
+    None = 0,
+    LRU = 1,
+    NMRU = 2,
 }
 
 #[repr(u8)]

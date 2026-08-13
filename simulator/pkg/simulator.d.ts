@@ -106,7 +106,7 @@ export namespace types {
      * | ---------------- | --- | --------------------------------------- |
      * | `associativity`  | `0` | `u8`                                    |
      * | `block_size_log` | `1` | `u8`                                    |
-     * | `num_sets_log`   | `2` | `u8`                                    |
+     * | `capacity_log`   | `2` | `u8`                                    |
      * | `policy`         | `3` | {@link CachePolicy `CachePolicy`}       |
      * | `write_mode`     | `4` | {@link CacheWriteMode `CacheWriteMode`} |
      */
@@ -199,11 +199,15 @@ export namespace types {
      * 
      * Variants:
      * 
-     * - `LRU` (discriminant value = `<default>`):
+     * - `None` (discriminant value = `<default>`):
      * | Name | @ | Type |
      * | ---- | - | ---- |
      * 
-     * - `NMRU` (discriminant value = `1`):
+     * - `LRU` (discriminant value = `1`):
+     * | Name | @ | Type |
+     * | ---- | - | ---- |
+     * 
+     * - `NMRU` (discriminant value = `2`):
      * | Name | @ | Type |
      * | ---- | - | ---- |
      */

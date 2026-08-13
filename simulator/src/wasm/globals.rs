@@ -1,10 +1,8 @@
-use crate::alloc_interface::IAlloc;
+use crate::alloc_interface::{allocation_to_trait_object, IAlloc, IAllocation};
 use crate::components::mem_access::DirectMemoryAccess;
 use crate::components::pipeline::DummyPipeline;
 use crate::components::{branch_predictor, BranchPredictor, MemoryAccess, Pipeline, Simulator};
-use crate::params::{
-    BranchPredictorParams, CacheParams, DynamicBranchPredictor, PipelineParams, SimulatorParams,
-};
+use crate::params::{BranchPredictorParams, CacheParams, CachePolicy, DynamicBranchPredictor, PipelineParams, SimulatorParams};
 use crate::wasm::wasm_mutex::Mutex;
 use crate::{Alloc, Allocation};
 use core::mem;
@@ -56,13 +54,27 @@ fn alloc_cache(params: CacheParams) -> Allocation<dyn MemoryAccess> {
     let CacheParams {
         associativity,
         block_size_log,
-        num_sets_log,
+        capacity_log,
         policy,
         write_mode,
     } = params;
 
     // TODO: un-dummy this
-    DirectMemoryAccess::new()
+    match policy {
+        CachePolicy::None => {
+            allocation_to_trait_object!(
+                Alloc::alloc::<DirectMemoryAccess>().init_zeroed()
+                =>
+                MemoryAccess
+            )
+        }
+        CachePolicy::LRU => {
+            todo!()
+        }
+        CachePolicy::NMRU => {
+            todo!()
+        }
+    }
 }
 
 fn alloc_branch_predictor(params: BranchPredictorParams) -> Allocation<dyn BranchPredictor> {
