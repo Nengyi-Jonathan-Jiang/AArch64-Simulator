@@ -1,25 +1,97 @@
-use crate::Allocation;
+use crate::alloc_interface::{IAlloc, IAllocation};
+use crate::components::MemoryAccess;
 use crate::components::sizes::{Addr, Byte};
-use crate::components::{MemoryAccess};
+use crate::zero_init::{ZeroInit, zeroInit};
+use crate::{Alloc, Allocation};
+use core::mem::transmute;
+use macro_rules_attribute::derive;
 
-pub struct DummyMemoryAccess {}
+// WASM pages are 64 KiB per page, with a maximum of 65536 pages (4GiB).
+const PAGE_SIZE_LOG: usize = 16;
+const PAGE_SIZE: usize = 1 << PAGE_SIZE_LOG; // (2 ^ 16) bytes = 65536 bytes = 64 KiB
 
-impl DummyMemoryAccess {
-    pub fn new() -> Allocation<dyn MemoryAccess> {
-        todo!()
+const NUM_PAGES: usize = 65536;
+
+#[repr(align(65536))] // align to PAGE_SIZE = 2 ^ 16 = 65536
+struct GrowableMemory {
+    page_table: [u16; NUM_PAGES], // This will take 2 pages (128 KiB) of memory
+}
+
+impl Default for GrowableMemory {
+    fn default() -> Self {
+        GrowableMemory {
+            page_table: [0; NUM_PAGES],
+        }
     }
 }
 
-impl MemoryAccess for DummyMemoryAccess {
-    fn get(&mut self, _: Addr) -> Result<&mut u8, ()> {
-        Err(())
-    }
+unsafe impl ZeroInit for GrowableMemory {}
 
-    fn read_b(&mut self, _: Addr) -> Result<Byte, ()> {
-        Ok(0)
-    }
+impl GrowableMemory {
+    pub fn get_page_for(&mut self, addr: Addr) -> &mut [u8; PAGE_SIZE] {
+        let page_index = (addr >> PAGE_SIZE_LOG) as usize;
+        let page_entry = &mut self.page_table[page_index];
 
-    fn write_b(&mut self, _: Addr, _: Byte) -> Result<(), ()> {
-        Ok(())
+        let page_ptr: *mut [u8; PAGE_SIZE];
+
+        if *page_entry == 0 {
+            // Impossible; this means we just haven't allocated this page yet
+
+            unsafe {
+                let page: Allocation<[u8; PAGE_SIZE]> = Alloc::alloc_raw(PAGE_SIZE, PAGE_SIZE)
+                    // Safety: size is correct
+                    .to_uninit()
+                    .init_with([0u8; PAGE_SIZE]);
+
+                // This is safe by requirements on IAllocation as long as we transmute back into an
+                // Allocation and drop it exactly when the GrowableMemory is dropped
+                page_ptr = transmute(page);
+            }
+
+            *page_entry = (page_ptr as usize >> PAGE_SIZE_LOG) as _;
+        } else {
+            page_ptr = (((*page_entry) as usize) << PAGE_SIZE_LOG) as *mut [u8; PAGE_SIZE];
+        }
+
+        // Safety: page is a valid pointer. In addition, since this function takes &mut
+        // self and is the only function able to access page_ptrs, it is impossible for this
+        // pointer to alias.
+        unsafe { page_ptr.as_mut_unchecked() }
+    }
+}
+
+impl Drop for GrowableMemory {
+    fn drop(&mut self) {
+        for i in self.page_table {
+            if i != 0 {
+                unsafe {
+                    let page: *mut [u8; PAGE_SIZE] = (i as usize * PAGE_SIZE) as _;
+                    let page: Allocation<[u8; PAGE_SIZE]> = transmute(page);
+                    drop(page);
+                }
+            }
+        }
+    }
+}
+
+#[derive(Default, zeroInit!)]
+pub struct DirectMemoryAccess {
+    memory: GrowableMemory,
+}
+
+impl DirectMemoryAccess {
+    pub fn new() -> Allocation<dyn MemoryAccess> {
+        unsafe { Alloc::alloc::<Self>().init_zeroed().unsized_map(|x| x as _) }
+    }
+}
+
+impl MemoryAccess for DirectMemoryAccess {
+    fn get(&mut self, addr: Addr) -> Result<&mut u8, ()> {
+        let page = self.memory.get_page_for(addr);
+        Ok(unsafe {
+            page.as_mut_ptr()
+                .offset((addr as usize & !(PAGE_SIZE - 1)) as isize)
+                .as_mut_unchecked()
+        })
     }
 }

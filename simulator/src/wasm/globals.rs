@@ -1,5 +1,5 @@
 use crate::alloc_interface::IAlloc;
-use crate::components::mem_access::DummyMemoryAccess;
+use crate::components::mem_access::DirectMemoryAccess;
 use crate::components::pipeline::DummyPipeline;
 use crate::components::{branch_predictor, BranchPredictor, MemoryAccess, Pipeline, Simulator};
 use crate::params::{
@@ -62,7 +62,7 @@ fn alloc_cache(params: CacheParams) -> Allocation<dyn MemoryAccess> {
     } = params;
 
     // TODO: un-dummy this
-    DummyMemoryAccess::new()
+    DirectMemoryAccess::new()
 }
 
 fn alloc_branch_predictor(params: BranchPredictorParams) -> Allocation<dyn BranchPredictor> {

@@ -7,6 +7,11 @@ use core::mem::{MaybeUninit, zeroed};
 use core::slice::from_raw_parts_mut;
 
 /// A pointer type that uniquely owns a heap allocation of type `T`
+///
+/// Safety: Transmuting to and from a raw pointer must be always safe and equivalent to a no-op
+/// provided that the raw pointer is eventually converted back into an `IAllocation` exactly once.
+/// The memory address and layout represented by the raw pointer must correspond precisely to the
+/// heap allocation owned by the IAllocation instance.
 pub unsafe trait IAllocation: core::ops::DerefMut + Sized {
     /// Result type of map-like operations
     type MapResult<T: ?Sized>: IAllocation<Target = T>;

@@ -36,7 +36,7 @@ export const module : {
      * - Rust name: `simulator::wasm::globals::alloc_simulator`
      * @param a
      *      - Converted from RVO return value
-     *      - WASM type: `int`
+     *      - WASM type: `{ a:int, b:int, c:int, d:int, e:int, f:int }`
      *      - Rust type: {@link Simulator `&mut Simulator`}
      */
     allocSimulator(a: number): void;
@@ -342,8 +342,10 @@ export namespace types {
      * | --------- | --- | -------------------------------------------------------- |
      * | `pointer` | `0` | {@link ptr_mut_dyn_MemoryAccess `*mut dyn MemoryAccess`} |
      * | `vtable`  | `4` | `&[usize ; 12]`                                          |
+     * 
+     * `MemoryAccess` implementations: {@link DirectMemoryAccess `DirectMemoryAccess`}
      */
-    type ptr_mut_dyn_MemoryAccess = $<[ptr_mut_dyn_MemoryAccess]>;
+    type ptr_mut_dyn_MemoryAccess = $<[ptr_mut_dyn_MemoryAccess, DirectMemoryAccess]>;
     
     /**
      * - Name: `*mut dyn BranchPredictor`
@@ -364,6 +366,17 @@ export namespace types {
      * - Size: `0`
      */
     type DummyPipeline = $<[]>;
+    
+    /**
+     * - Name: `DirectMemoryAccess`
+     * - Size: `131072`
+     * 
+     * Fields:
+     * | Name     | @   | Type                                    |
+     * | -------- | --- | --------------------------------------- |
+     * | `memory` | `0` | {@link GrowableMemory `GrowableMemory`} |
+     */
+    type DirectMemoryAccess = $<[GrowableMemory]>;
     
     /**
      * - Name: `Predictor0`
@@ -397,6 +410,17 @@ export namespace types {
      * | `base` | `0` | {@link BranchPredictorBase_4 `BranchPredictorBase<4>`} |
      */
     type Predictor2 = $<[BranchPredictorBase_4]>;
+    
+    /**
+     * - Name: `GrowableMemory`
+     * - Size: `131072`
+     * 
+     * Fields:
+     * | Name         | @   | Type            |
+     * | ------------ | --- | --------------- |
+     * | `page_table` | `0` | `[u16 ; 65536]` |
+     */
+    type GrowableMemory = $<[]>;
     
     /**
      * - Name: `BranchPredictorBase<4>`
