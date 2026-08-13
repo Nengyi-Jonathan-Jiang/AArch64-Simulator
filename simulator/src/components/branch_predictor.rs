@@ -329,7 +329,7 @@ mod tests {
     }
 
     #[test]
-    fn test_static_predictor() {
+    fn test_predictor_0() {
         // Check always
         {
             let p = &mut *Predictor0::new(
@@ -419,5 +419,52 @@ mod tests {
     }
 
     #[test]
-    fn test_dynamic_predictor() {}
+    fn test_dynamic_predictor_1() {
+        let p = &mut *Predictor1::new(
+            BTB_SIZE_LOG,
+            BHT_SIZE_LOG,
+            StaticBranchPredictionMode::Directional,
+        );
+
+        check_predict!(p,
+            0 -> (), 4 -> (), 8 -> (), 20 -> (), 264 -> (),
+            (Addr::MAX & !(INSTRUCTION_SIZE_BYTES as Addr - 1)) -> (),
+        );
+
+        p.update_branch(8, true);
+
+        // Should not have effect; btb wasn't updated
+        check_predict!(p, 8 -> ());
+
+        p.update_target(8, 24);
+
+        check_predict!(p, 8 -> 24);
+        // Nothing should change
+        p.update_branch(8, true);
+        check_predict!(p, 8 -> 24);
+        p.update_branch(8, true);
+        check_predict!(p, 8 -> 24);
+        // Now switch to false
+        p.update_branch(8, false);
+        check_predict!(p, 8 -> !);
+        p.update_branch(8, false);
+        check_predict!(p, 8 -> !);
+        // Now switch to true
+        p.update_branch(8, true);
+        check_predict!(p, 8 -> 24);
+
+        // This should still BTB miss (though it aliases to 8)
+        check_predict!(p, 1032 -> ());
+        p.update_target(1032, 32);
+        // Since it 1032 aliases with 8 and 8 is predicted taken, so is 32
+        check_predict!(p, 8 -> 24, 1032 -> 32);
+        p.update_branch(1032, false);
+        // Updating 1032 should also update both
+        check_predict!(p, 8 -> !, 1032 -> !);
+
+        // 24 was never "update_branch"-ed; given the defaults we want it to assume not taken
+        p.update_target(24, 64);
+        p.update_branch(8, true); // (double-check that 8 doesn't influence 24)
+        check_predict!(p, 24 -> !);
+    }
 }

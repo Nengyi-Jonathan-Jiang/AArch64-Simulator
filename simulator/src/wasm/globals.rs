@@ -1,7 +1,7 @@
 use crate::alloc_interface::IAlloc;
 use crate::components::mem_access::DummyMemoryAccess;
 use crate::components::pipeline::DummyPipeline;
-use crate::components::{BranchPredictor, MemoryAccess, Pipeline, Simulator, branch_predictor};
+use crate::components::{branch_predictor, BranchPredictor, MemoryAccess, Pipeline, Simulator};
 use crate::params::{
     BranchPredictorParams, CacheParams, DynamicBranchPredictor, PipelineParams, SimulatorParams,
 };
